@@ -1,369 +1,64 @@
 from board import Board
-
-from binary_search_tree.abstractcollection import AbstractCollection
-from binary_search_tree.bstnode import BSTNode
-from binary_search_tree.linkedstack import LinkedStack
-from math import log
 import random
 from btnode import Node
 
-class LinkedBST(AbstractCollection):
-    """An link-based binary search tree implementation."""
+class Tree:
+    def __init__(self, root=None):
+        self.root = root
 
-    def __init__(self, sourceCollection=None):
-        """Sets the initial state of self, which includes the
-        contents of sourceCollection, if it's present."""
-        self._root = None
-        AbstractCollection.__init__(self, sourceCollection)
+    def help(self):
+        check_result = self.root.data.check_board()
+        position1 = random.choice(check_result)
+        check_result.pop(check_result.index(position1))
+        position2 = random.choice(check_result)
+        check_result.pop(check_result.index(position2))
+        right_board = Board([el for el in self.root.data.coors()])
+        right_board.add(position1, "O")
+        left_board = Board([el for el in self.root.data.coors()])
+        left_board.add(position2, "O")
 
-    # Accessor methods
-    def __str__(self):
-        """Returns a string representation with the tree rotated
-        90 degrees counterclockwise."""
+        def recur(node):
+            if node.count != 0:
+                node.count = node.left.count + node.right.count
+                return node.count
 
-        def recurse(node, level):
-            s = ""
-            if node != None:
-                s += recurse(node.right, level + 1)
-                s += "| " * level
-                s += str(node.data) + "\n"
-                s += recurse(node.left, level + 1)
-            return s
+            if type(node.data.check_board()) == int:
+                node.count = node.data.check_board()
+                return node.count
 
-        return recurse(self._root, 0)
-
-    def __iter__(self):
-        """Supports a preorder traversal on a view of self."""
-        if not self.isEmpty():
-            stack = LinkedStack()
-            stack.push(self._root)
-            while not stack.isEmpty():
-                node = stack.pop()
-                yield node.data
-                if node.right != None:
-                    stack.push(node.right)
-                if node.left != None:
-                    stack.push(node.left)
-
-    def preorder(self):
-        """Supports a preorder traversal on a view of self."""
-        return None
-
-    def inorder(self):
-        """Supports an inorder traversal on a view of self."""
-        lyst = list()
-
-        def recurse(node):
-            if node != None:
-                recurse(node.left)
-                lyst.append(node.data)
-                recurse(node.right)
-
-        recurse(self._root)
-        return iter(lyst)
-
-    def postorder(self):
-        """Supports a postorder traversal on a view of self."""
-        return None
-
-    def levelorder(self):
-        """Supports a levelorder traversal on a view of self."""
-        lyst = list()
-
-        def recurse(node):
-            if node != None:
-                recurse(node.left)
-                lyst.append(node.data)
-                recurse(node.right)
-
-        recurse(self._root)
-        return iter(lyst)
-
-    def __contains__(self, item):
-        """Returns True if target is found or False otherwise."""
-        return self.find(item) != None
-
-    def find(self, item):
-        """If item matches an item in self, returns the
-        matched item, or None otherwise."""
-
-        def recurse(node):
-            if node is None:
-                return None
-            elif item == node.data:
-                return node.data
-            elif item < node.data:
-                return recurse(node.left)
             else:
-                return recurse(node.right)
+                check_result = node.data.check_board()
+                if len(check_result) >= 2:
+                    position1 = random.choice(check_result)
+                    check_result.pop(check_result.index(position1))
+                    pos_against1 = random.choice(check_result)
+                    right_board = Board([el for el in node.data.coors()])
+                    right_board.add(position1, "O")
+                    right_board.add(pos_against1, "X")
 
-        return recurse(self._root)
+                    position2 = random.choice(check_result)
+                    check_result.pop(check_result.index(position2))
+                    check_result.append(position1)
+                    left_board = Board([el for el in node.data.coors()])
+                    left_board.add(position2, "O")
+                    pos_against2 = random.choice(check_result)
+                    left_board.add(pos_against2, "X")
 
-    # Mutator methods
-    def clear(self):
-        """Makes self become empty."""
-        self._root = None
-        self._size = 0
-
-    def add(self, item, side):
-        """Adds item to the tree."""
-
-        # Helper function to search for item's position
-        def recurse(node):
-            # New item is less, go left until spot is found
-            if side == "left":
-                if node.left == None:
-                    node.left = BSTNode(item)
+                    node.left = Node(left_board)
+                    node.left.parent = node
+                    node.right = Node(right_board)
+                    node.right.parent = node
+                    node.count += recur(node.left) + recur(node.right)
+                    return node.count
                 else:
-                    recurse(node.left)
-            # New item is greater or equal,
-            # go right until spot is found
-            elif node.right == None:
-                node.right = BSTNode(item)
-            else:
-                recurse(node.right)
-                # End of recurse
-
-        # Tree is empty, so new item goes at the root
-        if self.isEmpty():
-            self._root = BSTNode(item)
-        # Otherwise, search for the item's spot
+                    position1 = random.choice(check_result)
+                    board = Board([el for el in node.data.coors()])
+                    board.add(position1, "O")
+                    node.left = Node(board)
+                    node.left.parent = node
+                    recur(node.left)
+                    return node.left.data.check_board()
+        if recur(Node(right_board)) > recur(Node(left_board)):
+            return position1
         else:
-            recurse(self._root)
-        self._size += 1
-
-    def remove(self, item):
-        """Precondition: item is in self.
-        Raises: KeyError if item is not in self.
-        postcondition: item is removed from self."""
-        if not item in self:
-            raise KeyError("Item not in tree.""")
-
-        # Helper function to adjust placement of an item
-        def liftMaxInLeftSubtreeToTop(top):
-            # Replace top's datum with the maximum datum in the left subtree
-            # Pre:  top has a left child
-            # Post: the maximum node in top's left subtree
-            #       has been removed
-            # Post: top.data = maximum value in top's left subtree
-            parent = top
-            currentNode = top.left
-            while not currentNode.right == None:
-                parent = currentNode
-                currentNode = currentNode.right
-            top.data = currentNode.data
-            if parent == top:
-                top.left = currentNode.left
-            else:
-                parent.right = currentNode.left
-
-        # Begin main part of the method
-        if self.isEmpty(): return None
-
-        # Attempt to locate the node containing the item
-        itemRemoved = None
-        preRoot = BSTNode(None)
-        preRoot.left = self._root
-        parent = preRoot
-        direction = 'L'
-        currentNode = self._root
-        while not currentNode == None:
-            if currentNode.data == item:
-                itemRemoved = currentNode.data
-                break
-            parent = currentNode
-            if currentNode.data > item:
-                direction = 'L'
-                currentNode = currentNode.left
-            else:
-                direction = 'R'
-                currentNode = currentNode.right
-
-        # Return None if the item is absent
-        if itemRemoved == None: return None
-
-        # The item is present, so remove its node
-
-        # Case 1: The node has a left and a right child
-        #         Replace the node's value with the maximum value in the
-        #         left subtree
-        #         Delete the maximium node in the left subtree
-        if not currentNode.left == None \
-                and not currentNode.right == None:
-            liftMaxInLeftSubtreeToTop(currentNode)
-        else:
-
-            # Case 2: The node has no left child
-            if currentNode.left == None:
-                newChild = currentNode.right
-
-                # Case 3: The node has no right child
-            else:
-                newChild = currentNode.left
-
-                # Case 2 & 3: Tie the parent to the new child
-            if direction == 'L':
-                parent.left = newChild
-            else:
-                parent.right = newChild
-
-        # All cases: Reset the root (if it hasn't changed no harm done)
-        #            Decrement the collection's size counter
-        #            Return the item
-        self._size -= 1
-        if self.isEmpty():
-            self._root = None
-        else:
-            self._root = preRoot.left
-        return itemRemoved
-
-    def replace(self, item, newItem):
-        """
-        If item is in self, replaces it with newItem and
-        returns the old item, or returns None otherwise."""
-        probe = self._root
-        while probe != None:
-            if probe.data == item:
-                oldData = probe.data
-                probe.data = newItem
-                return oldData
-            elif probe.data > item:
-                probe = probe.left
-            else:
-                probe = probe.right
-        return None
-
-    def height(self):
-        '''
-        Return the height of tree
-        :return: int
-        '''
-
-        def height1(top):
-            '''
-            Helper function
-            :param top:
-            :return:
-            '''
-            if top.left:
-                return 1 + height1(top.left)
-            if top.right:
-                return height1(top.right)
-            if top.right and not top.left:
-                return 1 + height1(top.right)
-            else:
-                return 1
-
-        return height1(self._root)
-
-    def isBalanced(self):
-        '''
-        Return True if tree is balanced
-        :return:
-        '''
-        if self.height() < 2*log(self._size+1,2)-1:
-            return True
-        else:
-            return False
-
-    def rangeFind(self, low, high):
-        '''
-        Returns a list of the items in the tree, where low <= item <= high."""
-        :param low:
-        :param high:
-        :return:
-        '''
-        if self.find(low) and self.find(high):
-            elems = [el for el in self.inorder()]
-            res = elems[elems.index(low):elems.index(high)+1]
-            return res
-
-
-
-    def rebalance(self):
-        '''
-        Rebalances the tree.
-        :return:
-        '''
-        lst = []
-        for el in self.inorder():
-            lst.append(el)
-        lst.sort()
-
-        def recurse(lst, tr):
-            if lst == []:
-                return tr
-            else:
-                index = len(lst) // 2
-                tr.add(lst[index])
-                recurse(lst[:index], tr)
-                recurse(lst[index + 1:], tr)
-                return tr
-
-        tr = recurse(lst, LinkedBST())
-        return tr
-
-
-    def successor(self, item):
-        """
-        Returns the smallest item that is larger than
-        item, or None if there is no such item.
-        :param item:
-        :type item:
-        :return:
-        :rtype:
-        """
-        if self.find(item):
-            elems = [el for el in self.inorder()]
-            if elems.index(item) != self._size:
-                res = elems[elems.index(item)+1]
-                return res
-
-    def predecessor(self, item):
-        """
-        Returns the largest item that is smaller than
-        item, or None if there is no such item.
-        :param item:
-        :type item:
-        :return:
-        :rtype:
-        """
-        if self.find(item):
-            elems = [el for el in self.inorder()]
-            if elems.index(item) != 0:
-                res = elems[elems.index(item)-1]
-                return res
-
-    def best_variant(self):
-        check_res = self._root.data.check_board()
-
-        def recurse(check_result, board):
-            if type(check_result) == list and check_result != []:
-                position1 = random.choice(check_result)
-                print(position1)
-                check_result.pop(check_result.index(position1))
-                position2 = random.choice(check_result)
-                print(position2)
-                # saved_node =
-                board1 = board.add(position1, "O")
-                print(board1)
-                print("Node data2", node.data)
-                board2 = board.add(position2, "O")
-
-                print(board2)
-                node.left = Node(board1)
-                node.right = Node(board2)
-            else:
-                return check_result
-
-        recurse(check_res, self._root)
-
-if __name__ == "__main__":
-    # board = Board()
-    # board.add((1,1),"X")
-    # tr = LinkedBinaryTree(Node(board))
-    # print(tr.best_variant())
-    # pos = tr.best_variant()
-    # board.add(pos, "O")
-    tr = LinkedBST()
-    print(tr)
+            return position2

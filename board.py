@@ -16,7 +16,7 @@ class Board:
         raise TypeError("Position is busy!")
 
 
-    def check_board(self, sign="O"):
+    def check_board(self):
         possible_win_states = [(1, 2, 3), (4, 5, 6), (7, 8, 9), (1, 5, 9), (3, 5, 7), (1, 4, 7), (2, 5, 8), (3, 6, 9)]
         for state in possible_win_states:
             if self.line_board[state[0] - 1] == self.line_board[state[1] - 1] == self.line_board[state[2] - 1] == "O":
@@ -57,14 +57,6 @@ class Board:
             res += "\n"
         return res
 
-if __name__ == "__main__":
-    my_board = Board()
-    my_board.add((1,1), "O")
-    my_board.add((2,1), "X")
-    my_board.add((0,0), "O")
-    # my_board.add((2,2), "O")
-    print(my_board.check_board())
-    print(my_board)
 
 
 

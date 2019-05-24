@@ -1,7 +1,7 @@
 class Node:
-    """Represents a node for a linked binary search tree."""
-
-    def __init__(self, data, left = None, right = None):
-        self.data = data
+    def __init__(self, item, left = None, right = None):
+        self.data = item
         self.left = left
         self.right = right
+        self.parent = None
+        self.count = 0
